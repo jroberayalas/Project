@@ -15,9 +15,13 @@ dataset <- select(dataset, -(X:num_window))
 
 # Create training and test set
 library(caret)
+set.seed(12321)
 inTrain <- createDataPartition(dataset$classe, p = 0.7, list = FALSE)
 training <- dataset[inTrain, ]
 testing <- dataset[-inTrain, ]
+
+# Plot
+qplot(classe, data = training, fill = classe)
 
 # Training Random Forest
 model.RF <- train(classe ~ ., data = training, method = "rf", prox = TRUE)

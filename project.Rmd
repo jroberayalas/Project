@@ -1,13 +1,55 @@
 ---
 title: "Practical Machine Learning Project"
 author: "Jose Roberto Ayala Solares"
-date: "February 12th, 2015"
+date: "February 17th, 2015"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Background
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement ??? a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. The goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to identify when they perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website [here](http://groupware.les.inf.puc-rio.br/har) (see the section on the Weight Lifting Exercise Dataset). 
+
+## Data Description and Processing
+
+```{r dataset}
+dataset <- read.csv("pml-training.csv", na.strings = c("NA", "", " "))
+```
+
+The dataset consists of 19622 of 160 variables. From these, 7 variables contain information like the name of the user and the time when the measurements where taken. Also, 100 variables are practically useless because they contain around 19216 missing values. From this explonatory analysis, we decided to omit these 107 variables and only work with the remaining 53. It is important to mention that the variable of interest is the `classe` variable which consists of 5 levels:
+
+- A: 
+- B: 
+- C: 
+- D: 
+- E: 
+
+```{r cleaning}
+# Omit columns with NAs
+omit.variables <- sapply(dataset, function(x) {sum(is.na(x)) > 0})
+dataset <- dataset[ , !omit.variables]
+
+# Omit first columns (no useful info)
+library(dplyr)
+dataset <- select(dataset, -(X:num_window))
+```
+
+## Model Training
+
+The dataset is splitted into training and validation set using 70%-30% of the original dataset, respectively. The training set is the one that is used during model training.
+
+We consider 2 models: a Random Forest, and Stochastic Gradient Boosting. Their performance is evaluated using the validation set.
+
+The best model is used in a separate testing set that consists of 20 observations that were not used during the training and validation.
+
+
+
+
+
+Split the training dataset into a training and a testing data set. (I'll call the test data set with the 20 observations for submission "validation data set" from here on.)
+Train some models on the training data set using "train" from the "caret" package. Here, I used cross validation for model assessment by using the option "trControl = trainControl(method = "cv")".
+Calculate the accuracy on the testing dataset.
+If the model is satisfactory, use it to predict the classe of the 20 observations in the validation data set.
+Submit 20 predictions for grading (I got all 20 right).
 
 ```{r}
 summary(cars)
