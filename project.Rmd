@@ -104,6 +104,6 @@ pred <- predict(model.RF.top, validation)
 confusionMatrix(pred, validation$classe)
 ```
 
-The trained model has an accuracy of 98.78% with a 95% confidence interval of (98.46%, 99.04%) in the validation set.
+The trained model has an accuracy of 98.78% with a 95% confidence interval of (98.46%, 99.04%) in the validation set. The out-of-sample error is of 1.22%.
 
 Finally, the trained model is used in a separate testing set that consists of 20 observations that were not used during the training neither validation. For these new observations, the variable `classe` was identified successfully.
