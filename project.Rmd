@@ -21,7 +21,7 @@ Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now poss
 dataset <- read.csv("pml-training.csv", na.strings = c("NA", "", " "))
 ```
 
-The dataset consists of 19622 of 160 variables. From these, 7 variables contain information like the name of the user and the time when the measurements where taken. Also, 100 variables are practically useless because they contain around 19216 missing values. From this explonatory analysis, we decided to omit these 107 variables and only work with the remaining 53. It is important to mention that the variable of interest is the `classe` variable which consists of 5 levels:
+The dataset consists of 19622 observations of 160 variables. From these, 7 variables contain information like the name of the user and the time when the measurements where taken. Also, 100 variables are practically useless because they contain around 19216 missing values. From this explonatory analysis, we decided to omit these 107 variables and only work with the remaining 53. It is important to mention that the variable of interest is the `classe` variable which consists of 5 levels:
 
 - A: activity correctly performed
 - B: throwing the elbows to the front
@@ -104,6 +104,6 @@ pred <- predict(model.RF.top, validation)
 confusionMatrix(pred, validation$classe)
 ```
 
-The trained model has an accuracy of 98.73% with a 95% confidence interval of (98.41%, 99%).
+The trained model has an accuracy of 98.78% with a 95% confidence interval of (98.46%, 99.04%) in the validation set.
 
 Finally, the trained model is used in a separate testing set that consists of 20 observations that were not used during the training neither validation. For these new observations, the variable `classe` was identified successfully.
