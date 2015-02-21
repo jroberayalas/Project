@@ -100,7 +100,7 @@ model.RF.top <- randomForest(x = training[ , top.names],
 Once the model is trained, we check its performance using the validation set.
 
 ```{r validation}
-pred <- predict(model.RF.top, validation)
+pred <- predict(model.RF, validation)
 confusionMatrix(pred, validation$classe)
 ```
 
