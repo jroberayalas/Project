@@ -5,25 +5,31 @@ date: "February 17th, 2015"
 output: html_document
 ---
 
+```{r global_options, include=FALSE}
+library(knitr)
+opts_chunk$set(echo=TRUE, cache = TRUE)
+```
+
 ## Background
 
-Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement ??? a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. The goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to identify when they perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website [here](http://groupware.les.inf.puc-rio.br/har) (see the section on the Weight Lifting Exercise Dataset). 
+Using devices such as *Jawbone Up*, *Nike FuelBand*, and *Fitbit* it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. The goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to identify when they perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website [here](http://groupware.les.inf.puc-rio.br/har) (see the section on the Weight Lifting Exercise Dataset). 
 
 ## Data Description and Processing
 
 ```{r dataset}
+# Read data
 dataset <- read.csv("pml-training.csv", na.strings = c("NA", "", " "))
 ```
 
 The dataset consists of 19622 of 160 variables. From these, 7 variables contain information like the name of the user and the time when the measurements where taken. Also, 100 variables are practically useless because they contain around 19216 missing values. From this explonatory analysis, we decided to omit these 107 variables and only work with the remaining 53. It is important to mention that the variable of interest is the `classe` variable which consists of 5 levels:
 
-- A: 
-- B: 
-- C: 
-- D: 
-- E: 
+- A: activity correctly performed
+- B: throwing the elbows to the front
+- C: lifting the dumbbell only halfway
+- D: lowering the dumbbell only halfway
+- E: throwing the hips to the front
 
-```{r cleaning}
+```{r cleaning, message=FALSE}
 # Omit columns with NAs
 omit.variables <- sapply(dataset, function(x) {sum(is.na(x)) > 0})
 dataset <- dataset[ , !omit.variables]
@@ -37,28 +43,67 @@ dataset <- select(dataset, -(X:num_window))
 
 The dataset is splitted into training and validation set using 70%-30% of the original dataset, respectively. The training set is the one that is used during model training.
 
-We consider 2 models: a Random Forest, and Stochastic Gradient Boosting. Their performance is evaluated using the validation set.
-
-The best model is used in a separate testing set that consists of 20 observations that were not used during the training and validation.
-
-
-
-
-
-Split the training dataset into a training and a testing data set. (I'll call the test data set with the 20 observations for submission "validation data set" from here on.)
-Train some models on the training data set using "train" from the "caret" package. Here, I used cross validation for model assessment by using the option "trControl = trainControl(method = "cv")".
-Calculate the accuracy on the testing dataset.
-If the model is satisfactory, use it to predict the classe of the 20 observations in the validation data set.
-Submit 20 predictions for grading (I got all 20 right).
-
-```{r}
-summary(cars)
+```{r data splitting, message=FALSE}
+set.seed(12321)
+library(caret)
+inTrain <- createDataPartition(dataset$classe, p = 0.7, list = FALSE)
+training <- dataset[inTrain, ]
+validation <- dataset[-inTrain, ]
 ```
 
-You can also embed plots, for example:
+A quick plot on the target variable shows us its distribution.
 
-```{r, echo=FALSE}
-plot(cars)
+```{r plot}
+# Plot
+qplot(classe, data = training, fill = classe)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+For this task, we decided to use Random Forests as the model of choice. First, we trained a model using all 53 variables. 
+
+```{r model training, message=FALSE}
+library(randomForest)
+model.RF <- randomForest(classe ~ ., 
+                         data = training,
+                         ntree = 20)
+```
+
+Then, we perform cross-validation to determine the appropriate number of variables to consider for model training.
+
+```{r cross-validation}
+result <- rfcv(trainx = training[ , -53], trainy = training[ , 53], ntree = 20)
+with(result, plot(n.var, 
+                  error.cv, 
+                  log = "x", 
+                  type = "o", 
+                  lwd = 2, 
+                  xlab = "Number of variables", 
+                  ylab = "CV Error"))
+```
+
+From the plot above, the cross-validation error indicates that only the top 13 variables (ranked using the mean decrease in Gini coefficient) are required to produce a good model. Such variables are shown below:
+
+```{r plotting}
+varImpPlot(model.RF, n.var = 13)
+```
+
+We re-train our model using these top variables.
+
+```{r model re-training}
+variables <- varImp(model.RF)
+top.names <- rownames(variables)[order(variables, decreasing = TRUE)][1:13]
+
+model.RF.top <- randomForest(x = training[ , top.names],
+                             y = training$classe,
+                             ntree = 20)
+```
+
+Once the model is trained, we check its performance using the validation set.
+
+```{r validation}
+pred <- predict(model.RF.top, validation)
+confusionMatrix(pred, validation$classe)
+```
+
+The trained model has an accuracy of 98.73% with a 95% confidence interval of (98.41%, 99%).
+
+Finally, the trained model is used in a separate testing set that consists of 20 observations that were not used during the training neither validation. For these new observations, the variable `classe` was identified successfully.
